@@ -1,3 +1,4 @@
+// DefoqFecEKDygwUJCcbnih9u
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -96,6 +97,62 @@ server.tool(
             ]
         };
 
+    }
+);
+
+// tool obtener información de los aeropuertos de un país
+server.tool(
+    "obtener_aeropuertos",
+    "herramienta para obtener información de los aeropuertos de un país",
+    {
+        pais: z.string().describe("País del que se desean obtener aeropuertos"),
+    },
+    async ({ pais }) => {
+
+        const allAirports: any[] = [];
+        let page = 1;
+        let hasMorePages = true;
+
+        while (hasMorePages) {
+            const response = await fetch(`https://airportgap.com/api/airports?page=${page}`);
+            if (!response.ok) {
+                return {
+                    content: [
+                        {
+                            type: "text",
+                            text: `Error al obtener aeropuertos en la página ${page}.`
+                        }
+                    ]
+                };
+            }
+
+            const data = await response.json();
+            const airports = data.data.filter((airport: any) => airport.attributes.country === pais);
+            allAirports.push(...airports);
+
+            hasMorePages = data.meta && data.meta.next_page !== null;
+            page++;
+        }
+
+        if (allAirports.length === 0) {
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: `No se encontraron aeropuertos en el país ${pais}.`
+                    }
+                ]
+            };
+        }
+
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: JSON.stringify(allAirports, null, 2)
+                }
+            ]
+        };
     }
 );
 
