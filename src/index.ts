@@ -14,7 +14,7 @@ const server = new McpServer({
     },
 });
 
-// tool saludate
+// tool saludar
 server.tool(
     "saludame",
     "herramienta para saludar",
@@ -155,6 +155,68 @@ server.tool(
         };
     }
 );
+
+// tool obtener información de un aeropuerto
+server.tool(
+    "obtener_informacion_aeropuerto",
+    "herramienta para obtener información de un aeropuerto",
+    {
+        icao: z.string().describe("Código ICAO del aeropuerto del que se desea obtener información"),
+    },
+    async ({ icao }) => {
+        const response = await fetch(`https://airportgap.com/api/airports/${icao}`);
+        if (!response.ok) {
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: `No se encontró información para el aeropuerto con código ICAO ${icao}. Debe ser un código válido.`
+                    }
+                ]
+            };
+        }
+        const data = await response.json();
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: JSON.stringify(data, null, 2)
+                }
+            ]
+        };
+    }
+);
+
+// tool obtener información de un país
+server.tool(
+    "obtener_informacion_pais",
+    "herramienta para obtener información de un país",
+    {
+        pais: z.string().describe("País del que se desea obtener información"),
+    },
+    async ({ pais }) => {
+        if (!paisesLatitudLong[pais]) {
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: `País no encontrado: ${pais}. Por favor, proporciona un país válido.`
+                    }
+                ]
+            };
+        }
+        const { latitud, longitud } = paisesLatitudLong[pais];
+        return {
+            content: [
+                {
+                    type: "text",
+                    text: `Información del país ${pais}:\nLatitud: ${latitud}\nLongitud: ${longitud}`
+                }
+            ]
+        };
+    }
+);
+
 
 // Start the server with Stdio transport
 const transport = new StdioServerTransport();
