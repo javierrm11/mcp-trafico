@@ -280,6 +280,55 @@ server.tool(
   }
 );
 
+// crear un txt con la información de un país
+server.tool(
+  "crear_txt_pais",
+  "herramienta para crear un archivo txt con la información de un país",
+  {
+    pais: z.string().describe("País del que se desea crear el archivo txt"),
+  },
+  async ({ pais }) => {
+    if (!paisesLatitudLong[pais]) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `País no encontrado: ${pais}. Por favor, proporciona un país válido.`,
+          },
+        ],
+      };
+    }
+    const { latitud, longitud } = paisesLatitudLong[pais];
+    const content = `Información del país ${pais}:\nLatitud: ${latitud}\nLongitud: ${longitud}`;
+    
+    // Create a Blob with the content
+    const blob = new Blob([content], { type: 'text/plain' });
+    
+    // Convert Blob to base64 string
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    await new Promise((resolve) => reader.onloadend = resolve);
+    
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Archivo creado con la información del país ${pais}.`,
+        },
+        {
+          type: "resource",
+          resource: {
+            text: `${pais}_info.txt`,
+            uri: reader.result as string,
+            mimeType: "text/plain",
+          },
+        },
+      ],
+    };
+  }
+);
+
+
 // Start the server with Stdio transport
 const transport = new StdioServerTransport();
 await server.connect(transport);
